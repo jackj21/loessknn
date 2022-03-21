@@ -1,0 +1,575 @@
+---
+html_document:
+  df_print: paged
+author: "Xumanning Luo, Jack Jiang"
+date: "10/26/2021"
+output:
+  pdf_document:
+    highlight: haddock
+  html_document:
+    df_print: paged
+subtitle: Project 1
+keep_tex: no
+number_sections: no
+title: "CMDA-4654  \n Project1"
+geometry: margin = 0.5in
+header-includes:
+- \usepackage{booktabs}
+- \usepackage{longtable}
+- \usepackage{array}
+- \usepackage{multirow}
+- \usepackage{wrapfig}
+- \usepackage{float}
+- \usepackage{colortbl}
+- \usepackage{pdflscape}
+- \usepackage{tabu}
+- \usepackage{threeparttable}
+- \usepackage{threeparttablex}
+- \usepackage[normalem]{ulem}
+- \usepackage{makecell}
+- \usepackage{xcolor}
+editor_options:
+  chunk_output_type: console
+documentclass: article
+urlcolor: blue
+---
+  
+<!-- The above is set to automatically compile to a .pdf file.   -->
+<!-- It will only succeed if LaTeX is installed. -->
+  
+<!-- If you absolutely can't get LaTeX installed and/or working, then you can compile to a .html first,  -->
+<!-- by clicking on the arrow button next to knit and selecting Knit to HTML. -->
+
+<!-- You must then print you .html file to a .pdf by using first opening it in a web browser and then printing to a .pdf -->
+
+
+```{r setup, include=FALSE}
+# This is the setup chunk
+#  Here you can set global options for the entire document
+
+library(knitr) # I recommend doing this here
+
+# Although you can call functions from a library using the following notation
+#  without loading the entire library.
+knitr::opts_chunk$set(echo = TRUE, 
+                      comment = NA, # Required
+                      fig.path = "./figures/",  # Store all figures here in relative path (make the folder first)
+                      fig.align = "center",
+                      fig.width = 7,
+                      fig.height = 7,
+                      message = FALSE, # Turn off load messages
+                      warning = FALSE # Turn off warnings
+                      )
+
+```
+
+\clearpage
+
+```{r include=FALSE}
+# You should not echo this chunk.
+# include=FALSE does more than echo=FALSE, it actually does: echo=FALSE, results='hide', message=FALSE, warning=FALSE, fig.show='hide'
+
+# You should set your working directory at the very beginning of your R Markdown file
+setwd("C:/Users/JackVT/OneDrive - Virginia Tech/Documents/CMDA4654/Projects/Project1")
+
+# In linux ~/ is shorthand for /home/username/
+# You should type things out properly for your system
+# Mac: /Users/username/Documents/CMDA4654/Lectures/Lecture_03/.../
+# Windows: C:/Users/username/Documents/etc/Lecture/Lecture_03/.../
+```
+
+```{r echo=FALSE}
+#read_chunk('Luo_Jiang_project1.R')
+source("Luo_Jiang_project1.R", local = knitr::knit_global())
+```
+<!-- ---------------------------------------------------------------------------------------------------- -->
+<!-- ---------------- Homework Problems start below these lines ----------------------------------------- -->
+<!-- ---------------------------------------------------------------------------------------------------- -->
+
+
+# Problem 1
+
+```{r}
+library(ggplot2)
+library(gridExtra)
+load("data/ozone.RData")
+data("ozone")
+```
+
+## 1
+
+```{r}
+for (D in 1:6){
+  model_fit <- lm(ozone$ozone ~ poly(ozone$temperature,D))
+  print(summary(model_fit))
+}
+```
+
+The polynomial fit with degree 4 appears to work the best since it explains 55.7% of the values and has the least residual standard error of 22.14.
+
+## 2
+```{r}
+spans <- seq(0.3, 0.75, by = 0.05)
+fit1 <- myloess(ozone$temperature, ozone$ozone, span = 0.25, degree = 1, show.plot = FALSE)
+fit2 <- myloess(ozone$temperature, ozone$ozone, span = 0.25, degree = 2, show.plot = FALSE)
+result_1 <- data.frame(fit1[1:6])
+result_2 <- data.frame(fit2[1:6])
+for (span in spans){
+  fit1 <- myloess(ozone$temperature, ozone$ozone, span = span, degree = 1, show.plot = FALSE)
+  fit2 <- myloess(ozone$temperature, ozone$ozone, span = span, degree = 2, show.plot = FALSE)
+  result_1[nrow(result_1) + 1,] <- fit1[1:6]
+  result_2[nrow(result_2) + 1,] <- fit2[1:6]
+}
+```
+
+```{r}
+result_1
+```
+
+```{r result_1 top 3}
+# double checking result_1 rows with least SSE
+n1 <- length(result_1)
+sort(result_1$SSE)[3]
+```
+
+The three "best" degree = 1 fits, in order, are when span is equal to 0.75, 0.70 and 0.65 because they have the lowest SSE.
+
+```{r}
+myloess(ozone$temperature, ozone$ozone, span = 0.75, degree = 1, show.plot = FALSE)[7]
+myloess(ozone$temperature, ozone$ozone, span = 0.70, degree = 1, show.plot = FALSE)[7]
+myloess(ozone$temperature, ozone$ozone, span = 0.65, degree = 1, show.plot = FALSE)[7]
+```
+
+```{r}
+result_2
+```
+
+```{r result_2 top 3}
+# double checking result_2 rows with least SSE
+n2 <- length(result_2)
+sort(result_2$SSE)[1]
+```
+
+The three "best" degree = 2 fits, in order, are when span is equal to 0.65, 0.70 and 0.60 because they have the lowest SSE.
+
+```{r}
+myloess(ozone$temperature, ozone$ozone, span = 0.65, degree = 2, show.plot = FALSE)[7]
+myloess(ozone$temperature, ozone$ozone, span = 0.70, degree = 2, show.plot = FALSE)[7]
+myloess(ozone$temperature, ozone$ozone, span = 0.60, degree = 2, show.plot = FALSE)[7]
+```
+
+We did determine our "best" fits by picking the models with the lowest residual standard errors, using the SSE. For $degree=1$, when visually inspecting the $2^{nd}$ ($span=0.70$) and $3^{rd}$ ($span=0.65$) "best" fits and comparing it to the best ($span=0.75$), we believe our the data is not over-fit for our best fit as its regression fit line is smoothest and appears to fit best between all of the data points. For $degree=2$, taking a look at the plots of the 3 "best" fits, when comparing our $2^{nd}$ ($span=0.70$) and $3^{rd}$ ($span=0.60$) to our $1^{st}$ ($span=0.65$), there does appear to be over-fitting and so we believe the data may be over-fit.
+
+## 3
+Now, we will compare our results and plots with the built-in $loess()$ function.
+
+```{r}
+r_fit1_1 <- loess(ozone~temperature, data = ozone, span = 0.75, degree = 1, model = TRUE)
+r_fit1_2 <- loess(ozone~temperature, data = ozone, span = 0.70, degree = 1, model = TRUE)
+r_fit1_3 <- loess(ozone~temperature, data = ozone, span = 0.65, degree = 1, model = TRUE)
+```
+
+Plots for degree = 1:
+```{r}
+r_fit1_1
+r_fit1_2
+r_fit1_3
+
+rp1_1 <- ggplot(ozone, aes(temperature, ozone)) + geom_point()
+rp1_1 <- rp1_1 + geom_smooth(method="loess", span=0.75) + ggtitle("loess 0.75")
+
+rp1_2 <- ggplot(ozone, aes(temperature, ozone)) + geom_point()
+rp1_2 <- rp1_2 + geom_smooth(method="loess", span=0.70) + ggtitle("loess 0.70")
+
+rp1_3 <- ggplot(ozone, aes(temperature, ozone)) + geom_point()
+rp1_3 <- rp1_3 + geom_smooth(method="loess", span=0.65) + ggtitle("loess 0.65")
+
+
+p1_1 <- myloess(ozone$temperature, ozone$ozone, span = 0.75, degree = 1, show.plot = FALSE)[7]
+p1_2 <- myloess(ozone$temperature, ozone$ozone, span = 0.70, degree = 1, show.plot = FALSE)[7]
+p1_3 <- myloess(ozone$temperature, ozone$ozone, span = 0.65, degree = 1, show.plot = FALSE)[7]
+
+grid.arrange(rp1_1, rp1_2, rp1_3, heights = c(3, 3), widths = c(3, 3))
+
+```
+
+Plots for degree = 2:
+```{r}
+r_fit2_1 <- loess(ozone~temperature, data = ozone, span = 0.65, degree = 1, model = TRUE)
+r_fit2_2 <- loess(ozone~temperature, data = ozone, span = 0.70, degree = 1, model = TRUE)
+r_fit2_3 <- loess(ozone~temperature, data = ozone, span = 0.60, degree = 1, model = TRUE)
+r_fit2_1
+r_fit2_2
+r_fit2_3
+
+rp2_1 <- ggplot(ozone, aes(temperature, ozone)) + geom_point()
+rp2_1 <- rp2_1 + geom_smooth(method="loess", span=0.65) + ggtitle("loess 0.65")
+
+rp2_2 <- ggplot(ozone, aes(temperature, ozone)) + geom_point()
+rp2_2 <- rp2_2 + geom_smooth(method="loess", span=0.70) + ggtitle("loess 0.70")
+
+rp2_3 <- ggplot(ozone, aes(temperature, ozone)) + geom_point()
+rp2_3 <- rp2_3 + geom_smooth(method="loess", span=0.60) + ggtitle("loess 0.60")
+
+
+p2_1 <- myloess(ozone$temperature, ozone$ozone, span = 0.65, degree = 2, show.plot = FALSE)[7]
+p2_2 <- myloess(ozone$temperature, ozone$ozone, span = 0.70, degree = 2, show.plot = FALSE)[7]
+p2_3 <- myloess(ozone$temperature, ozone$ozone, span = 0.60, degree = 2, show.plot = FALSE)[7]
+
+grid.arrange(rp2_1, rp2_2, rp2_3, heights = c(3, 3), widths = c(3, 3))
+
+```
+
+Observing the plots created from using $myloess()$ and R's built in $loess()$ function, they appear to be very similar. However, our loess function, $myloess()$, appears to be more smooth and fit the data points slightly better.
+
+
+# Problem 2
+```{r}
+library(MASS)
+data("mcycle")
+
+ggplot(mcycle, aes(x = times, y = accel)) + theme_bw() + geom_point()
+```
+
+## 1
+```{r}
+spans <- seq(0.3, 0.75, by = 0.05)
+mass_fit1 <- myloess(mcycle$times, mcycle$accel, span = 0.25, degree = 1, show.plot = FALSE)
+mass_fit2 <- myloess(mcycle$times, mcycle$accel, span = 0.25, degree = 2, show.plot = FALSE)
+mass_result1 <- data.frame(mass_fit1[1:6])
+mass_result2 <- data.frame(mass_fit2[1:6])
+for (span in spans){
+  mass_fit1 <- myloess(mcycle$times, mcycle$accel, span = span, degree = 1, show.plot = FALSE)
+  mass_fit2 <- myloess(mcycle$times, mcycle$accel, span = span, degree = 2, show.plot = FALSE)
+  mass_result1[nrow(mass_result1) + 1,] <- mass_fit1[1:6]
+  mass_result2[nrow(mass_result2) + 1,] <- mass_fit2[1:6]
+}
+```
+
+```{r}
+mass_result1
+```
+
+The three "best" $degree = 1$ LOESS regression fits are when span = 0.75, 0.70, and 0.65 because they have the lowest SSE values.
+
+```{r}
+mass_result2
+```
+
+The three "best" $degree = 2$ LOESS regression fits are when span = 0.75, 0.70, and 0.65 because they have the lowest SSE values.
+
+Here are the plots for our $myloess()$ function for $degree = 1$:
+
+```{r}
+myloess(mcycle$times, mcycle$accel, span = 0.75, degree = 1, show.plot = FALSE)[7]
+myloess(mcycle$times, mcycle$accel, span = 0.70, degree = 1, show.plot = FALSE)[7]
+myloess(mcycle$times, mcycle$accel, span = 0.65, degree = 1, show.plot = FALSE)[7]
+```
+
+Here are the plots for our $myloess()$ function for $degree = 2$:
+
+```{r}
+myloess(mcycle$times, mcycle$accel, span = 0.75, degree = 2, show.plot = FALSE)[7]
+myloess(mcycle$times, mcycle$accel, span = 0.70, degree = 2, show.plot = FALSE)[7]
+myloess(mcycle$times, mcycle$accel, span = 0.65, degree = 2, show.plot = FALSE)[7]
+```
+
+Upon visually inspecting the three best fits, for both $degree = 1$ and $degree = 2$, although when span = 0.75 has the lowest SSE, it fits the worst out of the 3 spans and span = 0.65 actually appears to fit the best. Thus, for $degree = 1$ and $degree = 2$, our model when span = 0.65 appears to provide the "best" fit.
+
+## 2
+Now, we will compare our results to the built-in $loess()$ function.
+
+Plots for degree = 1:
+```{r}
+
+m_fit1_1 <- loess(times~accel, data = mcycle, span = 0.75, degree = 1, model = TRUE)
+m_fit1_2 <- loess(times~accel, data = mcycle, span = 0.70, degree = 1, model = TRUE)
+m_fit1_3 <- loess(times~accel, data = mcycle, span = 0.65, degree = 1, model = TRUE)
+
+m_fit1_1
+m_fit1_2
+m_fit1_3
+
+mp1_1 <- ggplot(mcycle, aes(times, accel)) + geom_point()
+mp1_1 <- mp1_1 + geom_smooth(method="loess", span=0.75) + ggtitle("loess 0.75")
+
+mp1_2 <- ggplot(mcycle, aes(times, accel)) + geom_point()
+mp1_2 <- mp1_2 + geom_smooth(method="loess", span=0.70) + ggtitle("loess 0.70")
+
+mp1_3 <- ggplot(mcycle, aes(times, accel)) + geom_point()
+mp1_3 <- mp1_3 + geom_smooth(method="loess", span=0.65) + ggtitle("loess 0.65")
+
+
+my_mp1_1 <- myloess(mcycle$times, mcycle$accel, span = 0.75, degree = 1, show.plot = FALSE)[7]
+my_mp1_2 <- myloess(mcycle$times, mcycle$accel, span = 0.70, degree = 1, show.plot = FALSE)[7]
+my_mp1_3 <- myloess(mcycle$times, mcycle$accel, span = 0.65, degree = 1, show.plot = FALSE)[7]
+
+grid.arrange(mp1_1, mp1_2, mp1_3, heights = c(3, 3), widths = c(3, 3))
+
+```
+
+Plots for degree = 2:
+```{r}
+
+m_fit1_1 <- loess(times~accel, data = mcycle, span = 0.75, degree = 2, model = TRUE)
+m_fit1_2 <- loess(times~accel, data = mcycle, span = 0.70, degree = 2, model = TRUE)
+m_fit1_3 <- loess(times~accel, data = mcycle, span = 0.65, degree = 2, model = TRUE)
+
+m_fit1_1
+m_fit1_2
+m_fit1_3
+
+mp1_1 <- ggplot(mcycle, aes(times, accel)) + geom_point()
+mp1_1 <- mp1_1 + geom_smooth(method="loess", span=0.75) + ggtitle("loess 0.75")
+
+mp1_2 <- ggplot(mcycle, aes(times, accel)) + geom_point()
+mp1_2 <- mp1_2 + geom_smooth(method="loess", span=0.70) + ggtitle("loess 0.70")
+
+mp1_3 <- ggplot(mcycle, aes(times, accel)) + geom_point()
+mp1_3 <- mp1_3 + geom_smooth(method="loess", span=0.65) + ggtitle("loess 0.65")
+
+
+my_mp1_1 <- myloess(mcycle$times, mcycle$accel, span = 0.75, degree = 2, show.plot = FALSE)[7]
+my_mp1_2 <- myloess(mcycle$times, mcycle$accel, span = 0.70, degree = 2, show.plot = FALSE)[7]
+my_mp1_3 <- myloess(mcycle$times, mcycle$accel, span = 0.65, degree = 2, show.plot = FALSE)[7]
+
+grid.arrange(mp1_1, mp1_2, mp1_3, heights = c(3, 3), widths = c(3, 3))
+
+```
+
+Results for our $myloess()$ function:
+```{r}
+for (D in 1:6){
+  mass_model_fit <- lm(mcycle$accel ~ poly(mcycle$times,D))
+  print(summary(mass_model_fit))
+}
+```
+Comparing our $myloess()$ function with R's built in $loess()$ function, R's built in $loess()$ function visually appears to fit the data better. While observing the results, R's built in $loess()$ function also appears to fit the data better because its standard residual error is lower than our functions fitted model.
+
+
+# Part 2
+```{r echo=FALSE}
+#read_chunk('Luo_Jiang_project1.R')
+source("Luo_Jiang_project1.R", local = knitr::knit_global())
+```
+
+# Problem 3
+Given code to load data and clean it up.
+```{r}
+library(ggplot2)
+# Some pre-processing
+library(ISLR)
+# Remove the name of the car model and change the origin to categorical with actual name
+Auto_new <- Auto[, -9]
+# Lookup table
+newOrigin <- c("USA", "European", "Japanese")
+Auto_new$origin <- factor(newOrigin[Auto_new$origin], newOrigin)
+
+# Look at the first 6 observations to see the final version
+head(Auto_new)
+```
+
+## 1
+Normalize function
+```{r}
+normalize <- function(x) {
+  return ((x - min(x)) / (max(x) - min(x)))
+}
+```
+
+Here, we split the data set into training and testing data.
+```{r}
+# Normalize the dataset
+Auto_norm <- as.data.frame(lapply(Auto_new[,1:7], normalize))
+set.seed(123)
+# Randomize 70% of to
+ran <- sample(1:nrow(Auto_new), size=nrow(Auto_new)*0.7, replace=FALSE)
+# 70% training data set 
+train_auto <- Auto_norm[ran,]
+# 30% testing data set
+test_auto <- Auto_norm[-ran,]
+# Training labels
+train_labels_auto <- Auto_new[ran, 8]
+# Testing labels
+test_labels_auto <- Auto_new[-ran, 8]
+```
+
+
+Now we run our kNN function myKNN() for both regular kNN and for dnkNN and test different values of k and perform analysis.
+
+## 2
+For default kNN:
+```{r}
+accuracyk_auto <- c()
+for (k in 1:15) {
+  classification_k <- mykNN(train_auto, test_auto, train_labels_auto, test_labels_auto, k=k, weighted=FALSE)
+  accuracyk_auto[k] <- classification_k$accuracy
+}
+```
+
+For distance weighted dwkNN:
+```{r}
+accuracydwk_auto <- c()
+for (k in 1:15) {
+  classification_dwk <- mykNN(train_auto, test_auto, train_labels_auto, test_labels_auto, k=k, weighted=TRUE)
+  accuracydwk_auto[k] <- classification_dwk$accuracy
+}
+```
+
+## 3
+For default kNN:
+```{r}
+k_value <- 1:15
+autodf_k <- data.frame(k_value, accuracyk_auto)
+knitr::kable(autodf_k, "simple", col.names=c("k", "Accuracy"))
+```
+
+For distance weighted dwkNN:
+```{r}
+k_value <- 1:15
+autodf_dwk <- data.frame(k_value, accuracydwk_auto)
+knitr::kable(autodf_dwk, "simple", col.names=c("k", "Accuracy"))
+```
+
+## 4
+Here are plots of accuracy versus k, which will help us determine the best number of neighbors to use.
+
+For default kNN:
+```{r}
+plot(autodf_k$k_value, autodf_k$accuracyk_auto, xlab='k', ylab='Accuracy', main='k vs Accuracy')
+```
+This plot shows that the best number of neighbors to use for default kNN is when k = 1, 2, 11, or 13.
+
+For distance weighted dwkNN:
+```{r}
+plot(autodf_dwk$k_value, autodf_dwk$accuracydwk_auto, xlab='k', ylab='Accuracy', main='k vs Accuracy')
+```
+This plot shows that the best number of neighbors to use for distance weighted dwkNN is when k = 1.
+
+## 5
+Now we will examine the confusion matrix.
+
+For default kNN:
+```{r}
+classification1 <- mykNN(train_auto, test_auto, train_labels_auto, test_labels_auto, k=1, weighted=FALSE)
+classification2 <- mykNN(train_auto, test_auto, train_labels_auto, test_labels_auto, k=2, weighted=FALSE)
+classification11 <- mykNN(train_auto, test_auto, train_labels_auto, test_labels_auto, k=11, weighted=FALSE)
+classification13 <- mykNN(train_auto, test_auto, train_labels_auto, test_labels_auto, k=13, weighted=FALSE)
+```
+
+We have 4 values of k that have the same highest accuracy, so here is the confusion matrix of k = 1, 2, 11, and 13 in order.
+```{r}
+classification1$confusion
+classification2$confusion
+classification11$confusion
+classification13$confusion
+```
+
+
+For distance weighted dwkNN:
+```{r}
+classification_w1 <- mykNN(train_auto, test_auto, train_labels_auto, test_labels_auto, k=1, weighted=TRUE)
+```
+
+We can see from the distance weighted dwkNN plot that k=1 has the highest accuracy. Here is its confusion matrix.
+```{r}
+classification_w1$confusion
+```
+
+There are noticeable differences between kNN and dnkNN. The accuracy levels for each k value are very different from each other and each has different k values that model the data most accurately. 
+
+Now we will create a distinguished plot for k=5 and k=10 for both default kNN and distance weighted kNN.
+
+Run default kNN for k=5 and k=10.
+```{r}
+classification5 <- mykNN(train_auto, test_auto, train_labels_auto, test_labels_auto, k=5, weighted=FALSE)
+classification10 <- mykNN(train_auto, test_auto, train_labels_auto, test_labels_auto, k=10, weighted=FALSE)
+```
+
+Plot for default kNN:
+```{r k=5}
+ggplot() + geom_point(data=train_auto, aes(x=weight, y=mpg, color=train_labels_auto), alpha=0.5) + geom_point(data=test_auto, aes(x=weight,y=mpg, color=classification5$yhat), shape=18)
+```
+
+```{r k=10}
+ggplot() + geom_point(data=train_auto, aes(x=weight, y=mpg, color=train_labels_auto), alpha=0.5) + geom_point(data=test_auto, aes(x=weight,y=mpg, color=classification10$yhat), shape=18)
+```
+
+Run distance weighted dwkNN for k=5 and k=10. 
+```{r}
+classification5w <- mykNN(train_auto, test_auto, train_labels_auto, test_labels_auto, k=5, weighted=FALSE)
+classification10w <- mykNN(train_auto, test_auto, train_labels_auto, test_labels_auto, k=10, weighted=FALSE)
+```
+
+Plot for distance weighted dnkNN:
+```{r k=5}
+ggplot() + geom_point(data=train_auto, aes(x=weight, y=mpg, color=train_labels_auto), alpha=0.5) + geom_point(data=test_auto, aes(x=weight,y=mpg, color=classification5w$yhat), shape=18) 
+```
+
+```{r k=10}
+ggplot() + geom_point(data=train_auto, aes(x=weight, y=mpg, color=train_labels_auto), alpha=0.5) + geom_point(data=test_auto, aes(x=weight,y=mpg, color=classification10w$yhat), shape=18) 
+```
+
+
+# Problem 4
+Here, we set up the ozone training and testing data. We select 70 random observations for the training data and the remaining 41 observations for our testing data. We use ozone as the response and temperature as the predictor.
+```{r}
+load("data/ozone.RData")
+data("ozone")
+set.seed(123)
+ran_o <- sample(1:nrow(ozone), size=70) 
+train_ozone <- as.data.frame(ozone[ran_o, 3])
+test_ozone <- as.data.frame(ozone[-ran_o, 3])
+train_labels_ozone <- ozone[ran_o, 1]
+test_labels_ozone <- ozone[-ran_o, 1]
+```
+
+## a
+We use our function to do dwkNN for fitting a regression with ozone as the response and temperature as the predictor.
+```{r}
+sse <- c()
+k <- c(1,3,5,10,20)
+for (i in k){
+  dwknn_o <- mykNN(train_ozone, test_ozone, train_labels_ozone, test_labels_ozone, k=i, weighted=TRUE)
+  # fitted regression points
+  df <- data.frame(temperature = ozone[-ran_o,3], ozone = dwknn_o$yhat)
+  # training data
+  dtr <- data.frame(temperature = ozone[ran_o,3], ozone = ozone[ran_o,1])
+  # testing data
+  dt <- data.frame(temperature = ozone[-ran_o,3], ozone = ozone[-ran_o,1])
+  # ggplot
+  print(ggplot() + geom_point(data = dtr, aes(temperature,ozone), color = 'black') + geom_point(data = dt, aes(temperature,ozone), color = 'blue') + geom_point(data = df, aes(temperature, ozone), color = 'red') + geom_line(data = df, aes(temperature, ozone), color = 'red') + ggtitle(i))
+  sse <- c(sse,dwknn_o$SSE)
+}
+```
+
+Here is the table of the results showing the SSE and value of k that was used.
+
+```{r}
+table <- data.frame(SSE = sse, k = k)
+knitr::kable(table, "latex")
+```
+
+When k = 3, the SSE is the smallest. Therefore, when choosing from $k = 1,3,5,10,20$, finding the nearest 3 points can help us find the most accurate regression for the dataset.
+
+## b
+```{r}
+train_ozone_all <- as.data.frame(ozone[ran_o, c(2,3,4)])
+test_ozone_all <- as.data.frame(ozone[-ran_o, c(2,3,4)])
+train_labels_ozone <- ozone[ran_o, 1]
+test_labels_ozone <- ozone[-ran_o, 1]
+sse_all <- c()
+k <- seq(1:20)
+for (i in k){
+  dwknn_o <- mykNN(train_ozone, test_ozone, train_labels_ozone, test_labels_ozone, k=i, weighted=TRUE)
+  sse_all <- c(sse_all,dwknn_o$SSE)
+}
+df_all <- data.frame(SSE = sse_all, k = k)
+ggplot(data = df_all, aes(k,SSE)) + geom_point() + geom_line()
+```
+
+When k becomes larger, the changing of SSE becomes smaller. When k = 3, the SSE is the smallest. Therefore, when choosing from $k = 1...20$, finding the nearest 3 points can help us find the most accurate regression for the data set.
+
+
+
+
